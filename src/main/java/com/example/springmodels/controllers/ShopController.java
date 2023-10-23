@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -29,6 +30,7 @@ public class ShopController {
     AddressRepository addressRepository;
     StatusRepository statusRepository;
     OrderRepository orderRepository;
+    OrderListRepository orderListRepository;
 
     ProductDao productDao;
     @Autowired
@@ -39,6 +41,7 @@ public class ShopController {
                           AddressRepository addressRepository,
                           StatusRepository statusRepository,
                           OrderRepository orderRepository,
+                          OrderListRepository orderListRepository,
                           ProductDao productDao){
         this.applicationRepository = applicationRepository;
         this.categoryRepository = categoryRepository;
@@ -48,6 +51,7 @@ public class ShopController {
         this.statusRepository = statusRepository;
         this.addressRepository = addressRepository;
         this.orderRepository = orderRepository;
+        this.orderListRepository = orderListRepository;
     }
 
     @GetMapping("/shop")
@@ -90,9 +94,6 @@ public class ShopController {
         ModelUser user = userRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
         application.setLocalDate(LocalDate.now());
         application.setPerson(user);
-
-
-
         applicationRepository.save(application);
         return "redirect:/application/create";
     }
@@ -101,11 +102,25 @@ public class ShopController {
     String makeOrder(Model model, @ModelAttribute(name = "id_address") int id_address){
         Address address = addressRepository.findById(id_address).orElseThrow();
         Status status = statusRepository.findById(1).orElse(new Status("В разработке"));
+        Iterable<Product> products = productRepository.findAll();
+        List<ProductMemory> productMemoryList = productDao.index();
+        List<OrderList> orderLists = new ArrayList<>();
+
         Order order = new Order(LocalDate.now(), status, address);
-        orderRepository.save(order);
+        int lastOrderId = orderRepository.save(order).getId();
+        order.setId(lastOrderId);
+
+        for(Product product : products){
+            for(ProductMemory productMemory : productMemoryList){
+                if(product.getId() == productMemory.getId()){
+                    orderLists.add(new OrderList(new OrderListKey(product.getId(), order.getId()), product, order));
+                }
+            }
+        }
+
+        orderListRepository.saveAll(orderLists);
+
         return "redirect:/shop";
     }
-
-
 }
 

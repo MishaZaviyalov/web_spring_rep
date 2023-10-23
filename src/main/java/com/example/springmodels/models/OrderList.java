@@ -22,6 +22,10 @@ public class OrderList {
     public OrderList() {
     }
 
+    public OrderList(OrderListKey id) {
+        this.id = id;
+    }
+
     public OrderList(OrderListKey id, Product product, Order order) {
         this.id = id;
         this.product = product;
