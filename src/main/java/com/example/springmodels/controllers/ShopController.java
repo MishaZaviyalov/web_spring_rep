@@ -90,6 +90,9 @@ public class ShopController {
         ModelUser user = userRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
         application.setLocalDate(LocalDate.now());
         application.setPerson(user);
+
+
+
         applicationRepository.save(application);
         return "redirect:/application/create";
     }
